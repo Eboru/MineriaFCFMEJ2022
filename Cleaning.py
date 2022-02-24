@@ -34,7 +34,15 @@ def print_tabulate(df: pd.DataFrame):
     print(tabulate(df, headers=df.columns, tablefmt='orgtbl'))
 
 
+def clear_win(str: str) -> str:
+    if str:
+        return 1
+    else:
+        return 0
+
+
 df = pd.read_csv("dataRealBuenaUsaEsta.csv").dropna().drop(
     columns=["players", "picks_bans", "pre_game_duration", "match_id", "match_seq_num", "leagueid", "positive_votes",
              "negative_votes", "flags", "engine"])
+df["radiant_win"] = df["radiant_win"].transform(clear_win)
 print_tabulate(df.iloc[:10])
