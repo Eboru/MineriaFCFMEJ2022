@@ -24,7 +24,6 @@ joinChar = df.join(heroes.set_index("id"), on="idHero")
 
 df_analisis_tower_damage = joinChar.groupby(["name"])[["towerDamage", "nethWorth"]].mean().sort_values(by=["towerDamage"], ascending=False)
 
-
 df_charVictoriaRadiant = joinMatch.query("isRadiant == True").groupby(["name"])[["radiant_win"]].sum() #contar ocurrencia de victoria radiantWin-charRadiant
 
 df_charVictoriaDire = joinMatch #Contar ocurrencias direWin-charDire
@@ -96,21 +95,33 @@ df_matchCountPerChar = joinMatch.groupby(["name"])[["VERY_LOW", "LOW", "MEDIUM",
 df_matchDurationAndChar = joinMatch.groupby(["name"])[["VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH"]].sum().div(df_matchCountPerChar)
 df_matchDurationAndChar.rename({"idPartida": "Cantidad"}, axis="columns", inplace=True)
 
+#Relacion denegados-kills
+fig = plt.figure(figsize=(6,6))
+ax1 = fig.add_subplot()
+ax1.hist2d(x=joinMatch["xpPerMin"], y=joinMatch["goldPerMin"], bins=100, cmap=plt.cm.plasma)
+x = np.linspace(ax1.get_xlim(),100)
+y = x
+ax1.plot(x, y)
+plt.ylabel("Gold Per Min")
+plt.xlabel("XP Per Min")
+plt.savefig("img/hist2d.png")
+plt.close()
 
+
+
+#KDA con Desviación
 analysis_kda = joinChar.groupby(["name"])[["kills", "deaths", "assists"]].agg([np.mean, np.std])
-
 #for index, row in analysis_kda.iterrows():
 #    row.unstack().plot(kind = "barh", y = "mean", legend = True, xerr = "std", title = index + " avg and std", color='purple')
 #    plt.savefig("img/avg_std/"+index+"_avg_std.png")
 #    plt.close()
 
 
-df_matchDurationAndChar.reset_index(inplace=True)
 
+#Scatter procentaje de clasificación de duración
+df_matchDurationAndChar.reset_index(inplace=True)
 df_matchDurationAverage = df_matchDurationAndChar[["VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH"]].mean().to_frame(name="mean")
 df_matchDurationAverage.reset_index(inplace=True)
-
-
 fig = plt.figure(figsize=(32,18))
 ax1 = fig.add_subplot()
 ax1.scatter(x=df_matchDurationAndChar["name"], y=df_matchDurationAndChar["VERY_LOW"], label='Very Low', s=100)
@@ -121,12 +132,13 @@ ax1.scatter(x=df_matchDurationAndChar["name"], y=df_matchDurationAndChar["VERY_H
 ax1.plot(ax1.get_xlim(), [df_matchDurationAverage["mean"], df_matchDurationAverage["mean"]])
 ax1.legend(loc='upper left')
 ax1.xaxis.labelpad = 20
-plt.ylabel("Promedio de clasificacion de duración")
-plt.xlabel("Hore")
+plt.ylabel("Procentaje de clasificación de duración")
+plt.xlabel("Heroe")
 plt.xticks(rotation=90)
 plt.savefig("img/scatter.png")
 plt.close()
 
+#Promedio first blood
 fig = plt.figure(figsize=(16,9))
 ax1 = fig.add_subplot()
 match2 = match
