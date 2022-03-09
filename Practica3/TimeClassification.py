@@ -12,8 +12,8 @@ def clasify_time(usage: int) -> str:
         return "MEDIUM"
     if 2700 < usage <= 3600:
         return "HIGH"
-    if usage > 4800:
-        return "VERY HIGH"
+    if usage > 3600:
+        return "VERY_HIGH"
 
 
 df = pd.read_csv("Practica3\cleanData.csv")

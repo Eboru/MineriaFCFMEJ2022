@@ -24,15 +24,29 @@ joinChar = df.join(heroes.set_index("id"), on="idHero")
 df_analisisChar = joinChar.groupby(["name"])[["kills", "deaths", "assists"]].mean().sort_values(by=["kills"], ascending=False)
 df_analisis_tower_damage = joinChar.groupby(["name"])[["towerDamage", "nethWorth"]].mean().sort_values(by=["towerDamage"], ascending=False)
 
-df_charVictoria = joinMatch.query("isRadiant == True").groupby(["name"])[["radiant_win"]].sum() #contar ocurrencia de victoria
+
+df_charVictoriaRadiant = joinMatch.query("isRadiant == True").groupby(["name"])[["radiant_win"]].sum() #contar ocurrencia de victoria radiantWin-charRadiant
+
+df_charVictoriaDire = joinMatch #Contar ocurrencias direWin-charDire
+df_charVictoriaDire["radiant_win"] = df_charVictoriaDire["radiant_win"].transform(lambda x: not x) #Negar para sumar
+df_charVictoriaDire = joinMatch.query("isRadiant == False").groupby(["name"])[["radiant_win"]].sum()
+df_charVictoriaTotal = df_charVictoriaRadiant.add(df_charVictoriaDire)
+
 df_charTotal = joinMatch.groupby(["name"])[["radiant_win"]].count() #contar ocurrencias totales
-df_analisisPorcentajeVictoria = df_charVictoria.div(df_charTotal).sort_values(by=["radiant_win"], ascending=False)
+df_analisisPorcentajeVictoria = df_charVictoriaTotal.div(df_charTotal).sort_values(by=["radiant_win"], ascending=False)
 df_analisisPorcentajeVictoria.rename({"radiant_win": "Promedio de victorias al elegir el personaje"}, axis="columns", inplace=True)
 
-#df_analisisPorcentajeVictoria = joinMatch.groupby(["name"])[["radiant_win"]].mean().sort_values(by=["radiant_win"], ascending=False)
-#df_analisisPorcentajeVictoria.rename({"radiant_win": "Promedio de victorias radiant si esta el personaje"}, axis="columns", inplace=True)
+df_analisisPorcentajeVictoriaRadiantSiPersonaje = joinMatch.groupby(["name"])[["radiant_win"]].mean().sort_values(by=["radiant_win"], ascending=False)
+df_analisisPorcentajeVictoriaRadiantSiPersonaje.rename({"radiant_win": "Promedio de victorias radiant si esta el personaje"}, axis="columns", inplace=True)
+
+df_analisisPorcentajeVictoriaDireSiPersonaje = joinMatch
+df_analisisPorcentajeVictoriaDireSiPersonaje["radiant_win"] = df_analisisPorcentajeVictoriaDireSiPersonaje["radiant_win"].transform(lambda x: not x)
+df_analisisPorcentajeVictoriaDireSiPersonaje = joinMatch.groupby(["name"])[["radiant_win"]].mean().sort_values(by=["radiant_win"], ascending=False)
+df_analisisPorcentajeVictoriaDireSiPersonaje.rename({"radiant_win": "Promedio de victorias dire si esta el personaje"}, axis="columns", inplace=True)
 
 matchCount = joinMatch[["idMatchInfo"]].count().min() #Contamos todas las partidas
+radiantVictory = joinMatch[["radiant_win"]].sum().min()
+radiantPercentage = radiantVictory/matchCount
 df_popularity_per_match = joinChar.groupby(["name"])[["idPartida"]].count() #Agrupamos por nombre y contamos cuantas veces aparece
 df_popularity_per_match["idPartida"] = df_popularity_per_match["idPartida"].transform(match_average) #Dividimos
 df_popularity_per_match = df_popularity_per_match.sort_values(by=["idPartida"], ascending=False)
@@ -78,12 +92,17 @@ df_matchDurationAndChar["MEDIUM"] = MEDIUM
 df_matchDurationAndChar["HIGH"] = HIGH
 df_matchDurationAndChar["VERY_HIGH"] = VERY_HIGH
 
-df_matchDurationAndChar = joinMatch.groupby(["name"])[["VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH"]].sum().sort_values(by=["HIGH"], ascending=False)
+df_matchCountPerChar = joinMatch.groupby(["name"])[["VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH"]].count()
+df_matchDurationAndChar = joinMatch.groupby(["name"])[["VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH"]].sum().div(df_matchCountPerChar).sort_values(by=["VERY_HIGH"], ascending=False)
 df_matchDurationAndChar.rename({"idPartida": "Cantidad"}, axis="columns", inplace=True)
 
 df_charDesviation = joinChar.groupby(["name"])[["kills", "deaths", "assists"]].std().sort_values(by=["kills"], ascending=False)
 
 print_tabulate(df_analisisPorcentajeVictoria)
+print("\n")
+print_tabulate(df_analisisPorcentajeVictoriaRadiantSiPersonaje)
+print("\n")
+print_tabulate(df_analisisPorcentajeVictoriaDireSiPersonaje)
 print("\n")
 print_tabulate(df_popularity_per_match)
 print("\n")
@@ -94,3 +113,4 @@ print("\n")
 print_tabulate(df_matchDurationAndChar)
 print("\n")
 print_tabulate(df_charDesviation)
+print("\n")
