@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 from tabulate import tabulate
 
 
@@ -22,34 +23,6 @@ match.rename({"Unnamed: 0": "idMatchInfo"}, axis="columns", inplace=True)
 joinMatch = df.join(match.set_index("match_id"), on="idPartida").join(heroes.set_index("id"), on="idHero")
 joinChar = df.join(heroes.set_index("id"), on="idHero")
 
-df_analisis_tower_damage = joinChar.groupby(["name"])[["towerDamage", "nethWorth"]].mean().sort_values(by=["towerDamage"], ascending=False)
-
-df_charVictoriaRadiant = joinMatch.query("isRadiant == True").groupby(["name"])[["radiant_win"]].sum() #contar ocurrencia de victoria radiantWin-charRadiant
-
-df_charVictoriaDire = joinMatch #Contar ocurrencias direWin-charDire
-df_charVictoriaDire["radiant_win"] = df_charVictoriaDire["radiant_win"].transform(lambda x: not x) #Negar para sumar
-df_charVictoriaDire = joinMatch.query("isRadiant == False").groupby(["name"])[["radiant_win"]].sum()
-df_charVictoriaTotal = df_charVictoriaRadiant.add(df_charVictoriaDire)
-
-df_charTotal = joinMatch.groupby(["name"])[["radiant_win"]].count() #contar ocurrencias totales
-df_analisisPorcentajeVictoria = df_charVictoriaTotal.div(df_charTotal).sort_values(by=["radiant_win"], ascending=False)
-df_analisisPorcentajeVictoria.rename({"radiant_win": "Promedio de victorias al elegir el personaje"}, axis="columns", inplace=True)
-
-df_analisisPorcentajeVictoriaRadiantSiPersonaje = joinMatch.groupby(["name"])[["radiant_win"]].mean().sort_values(by=["radiant_win"], ascending=False)
-df_analisisPorcentajeVictoriaRadiantSiPersonaje.rename({"radiant_win": "Promedio de victorias radiant si esta el personaje"}, axis="columns", inplace=True)
-
-df_analisisPorcentajeVictoriaDireSiPersonaje = joinMatch
-df_analisisPorcentajeVictoriaDireSiPersonaje["radiant_win"] = df_analisisPorcentajeVictoriaDireSiPersonaje["radiant_win"].transform(lambda x: not x)
-df_analisisPorcentajeVictoriaDireSiPersonaje = joinMatch.groupby(["name"])[["radiant_win"]].mean().sort_values(by=["radiant_win"], ascending=False)
-df_analisisPorcentajeVictoriaDireSiPersonaje.rename({"radiant_win": "Promedio de victorias dire si esta el personaje"}, axis="columns", inplace=True)
-
-matchCount = joinMatch[["idMatchInfo"]].count().min() #Contamos todas las partidas
-radiantVictory = joinMatch[["radiant_win"]].sum().min()
-radiantPercentage = radiantVictory/matchCount
-df_popularity_per_match = joinChar.groupby(["name"])[["idPartida"]].count() #Agrupamos por nombre y contamos cuantas veces aparece
-df_popularity_per_match["idPartida"] = df_popularity_per_match["idPartida"].transform(match_average) #Dividimos
-df_popularity_per_match = df_popularity_per_match.sort_values(by=["idPartida"], ascending=False)
-df_popularity_per_match.rename({"idPartida": "Porcentaje de eleccion global"}, axis="columns", inplace=True)
 
 df_matchDurationAndChar = joinMatch
 VERY_LOW = []
@@ -111,10 +84,10 @@ plt.close()
 
 #KDA con Desviación
 analysis_kda = joinChar.groupby(["name"])[["kills", "deaths", "assists"]].agg([np.mean, np.std])
-#for index, row in analysis_kda.iterrows():
-#    row.unstack().plot(kind = "barh", y = "mean", legend = True, xerr = "std", title = index + " avg and std", color='purple')
-#    plt.savefig("img/avg_std/"+index+"_avg_std.png")
-#    plt.close()
+for index, row in analysis_kda.iterrows():
+    row.unstack().plot(kind = "barh", y = "mean", legend = True, xerr = "std", title = index + " avg and std", color='purple')
+    plt.savefig("img/avg_std/"+index+"_avg_std.png")
+    plt.close()
 
 
 
@@ -152,8 +125,35 @@ plt.savefig("img/duracion_partida_primera_sangre.png")
 plt.close()
 
 
+for index_h, row_h in heroes.iterrows():
+    mapa = {"k": [], "d": [], "a": []}
+    queryStr = "name == \"" + row_h["name"]+"\""
+    df_query = joinChar.query(queryStr)
+    mapa["k"].append(df_query["kills"])
+    mapa["d"].append(df_query["deaths"])
+    mapa["a"].append(df_query["assists"])
 
+    fig = plt.figure(figsize=(16, 9))
+    ax1 = fig.add_subplot()
+    ax1.hist(mapa["k"], label="Kills", alpha=1, bins=25)
+    ax1.set_title("Kills")
+    plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
+    plt.savefig("img/dist/k_"+row_h["name"] +"_distribution.png")
+    plt.close()
 
-#df_kda_kda_desv = df_charDesviation.join(df_analisisChar, on="name", lsuffix="_DESV", rsuffix='_AVG')
+    fig = plt.figure(figsize=(16, 9))
+    ax1 = fig.add_subplot()
+    ax1.hist(mapa["d"], label="Deaths", alpha=1, bins=25)
+    ax1.set_title("Deaths")
+    plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
+    plt.savefig("img/dist/d_"+row_h["name"] +"_distribution.png")
+    plt.close()
 
-#df_charDesviation.query("name=='Chen' or name=='Ursa'").plot(kind='barh', stacked=True)
+    fig = plt.figure(figsize=(16, 9))
+    ax1 = fig.add_subplot()
+    ax1.hist(mapa["a"], label="Assists", alpha=1, bins=25)
+    ax1.set_title("Assists")
+    plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
+    plt.savefig("img/dist/a_"+row_h["name"] +"_distribution.png")
+    plt.close()
+
