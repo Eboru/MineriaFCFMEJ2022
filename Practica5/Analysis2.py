@@ -141,7 +141,7 @@ ax1 = fig.add_subplot()
 ax1.hist2d(joinChar["kills"], joinChar["xpPerMin"], label="kills", alpha=1, bins=50)
 ax1.set_title("Kills")
 plt.gca().xaxis.set_major_locator(mticker.MultipleLocator(1))
-plt.savefig("img/kills.png")
+plt.savefig("img/kills-xpPerMin.png")
 plt.close()
 #Test against Spearman's rank correlation coefficient
 spearmanRankCorrelation("Spearman's Correlation between xpPerMin and Kills", joinChar["kills"], joinChar["xpPerMin"])
