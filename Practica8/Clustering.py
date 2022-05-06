@@ -11,6 +11,7 @@ def print_tabulate(df: pd.DataFrame):
 
 #http://exponentis.es/ejemplo-de-clustering-con-k-means-en-python
 def kmeansClustering(df: pd.DataFrame, x: str, y: str, k: int):
+
     #Como decidir # de centroides
     #Usamos grafica elbow y revisamos donde esta el codo
     nc = range(1, 30)
@@ -29,6 +30,9 @@ def kmeansClustering(df: pd.DataFrame, x: str, y: str, k: int):
     #Etiquetamos cada row del data frame
     labels = kmeans.predict(df)
     df['label'] = labels
+
+    #
+
 
     colores = ['r', 'g', 'b', 'y', 'c', 'm']
 
@@ -65,5 +69,6 @@ kmeansClustering(dfDurationDireScore, "Duration", "Dire Score", 4)
 
 dfDireScoreRadiantScore = pd.DataFrame({ 'Radiant Score': match["radiant_score"], 'Dire Score': match["dire_score"] })
 kmeansClustering(dfDireScoreRadiantScore, "Radiant Score", "Dire Score", 4)
+
 
 
