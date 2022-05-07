@@ -75,7 +75,69 @@ def kmeansClusteringAndNearestNeighbors(df: pd.DataFrame, x: str, y: str, kClust
     plt.xlabel(x)
     plt.ylabel(y)
     plt.title('K-means clustering')
-    plt.savefig("img/clustering_"+x+"_"+y+".png")
+    plt.savefig("img/clustering_classification_"+x+"_"+y+".png")
+    plt.close()
+
+#http://exponentis.es/ejemplo-de-clustering-con-k-means-en-python
+def kmeansClusteringAndNearestNeighborsMethod2(df: pd.DataFrame, x: str, y: str, kClustering: int, kNeighbors: int, numeroDatosNuevos: int, mux : float, sigmax : float, muy : float, sigmay : float):
+
+    # Centroides
+    kmeans = KMeans(n_clusters=kClustering).fit(df)
+    centroids = kmeans.cluster_centers_
+
+
+    # Etiquetamos cada row del data frame
+    labels = kmeans.predict(df)
+
+    distancias = []
+    for idx2, classifiedRow in df.iterrows():
+        distancias.append({'indice' : idx2, 'distancia' : euclidean_distance(centroids[0, 0], centroids[0, 1], classifiedRow[0], classifiedRow[1])})
+    distancias.sort(key=lambda x: x["distancia"])
+    p95 = int(len(distancias)*.05)
+    distanciasExcluidas = distancias[len(distancias)-p95:]
+    for e in distanciasExcluidas:
+        labels[e["indice"]] = 1
+
+    df['label'] = labels
+
+    #KNN
+    datosPorAgrupar = pd.DataFrame({x: np.random.normal(mux, sigmax, numeroDatosNuevos), y: np.random.normal(muy, sigmay, numeroDatosNuevos)})
+    clasificaciones = []
+    for idx, row in datosPorAgrupar.iterrows():
+        distancias = []
+        for idx2, classifiedRow in df.iterrows():
+            distancias.append({'indice' : idx2, 'distancia' : euclidean_distance(row[0], row[1], classifiedRow[0], classifiedRow[1])})
+        distancias.sort(key=lambda x: x["distancia"])
+        distancias = distancias[:kNeighbors]
+        etiquetas = []
+        for e in distancias:
+            etiquetas.append(df["label"][e["indice"]])
+        clasificaciones.append(statistics.mode(etiquetas))
+
+
+
+    colores = ['r', 'g', 'b', 'y', 'c', 'm']
+
+    #Asignamos un color dependiendo del indice de la etiqueta de labels
+    asignar = []
+    for idx, row in df.iterrows():
+        asignar.append(colores[int(row[2])])
+
+    #Asignamos colores a las clasificaciones de datos nuevos
+    asignarDatosKNN = []
+    for e in clasificaciones:
+        asignarDatosKNN.append(colores[e])
+
+
+
+    plt.scatter(df[x], df[y], c=asignar, s=1)
+    plt.scatter(datosPorAgrupar[x], datosPorAgrupar[y], c="black", marker="^", s=50)
+    plt.scatter(datosPorAgrupar[x], datosPorAgrupar[y], c=asignarDatosKNN, marker="^", s=20)
+    plt.scatter(centroids[:, 0], centroids[:, 1], marker='*', c='black', s=20)
+    plt.xlabel(x)
+    plt.ylabel(y)
+    plt.title('K-means clustering')
+    plt.savefig("img/clustering_classification_method2_"+x+"_"+y+".png")
     plt.close()
 
 
@@ -98,6 +160,6 @@ dfDurationDireScore = pd.DataFrame({ 'Duration': match["duration"], 'Dire Score'
 kmeansClusteringAndNearestNeighbors(dfDurationDireScore, "Duration", "Dire Score", 4, 3, 5, 2500, 500, 40, 5)
 
 dfDireScoreRadiantScore = pd.DataFrame({ 'Radiant Score': match["radiant_score"], 'Dire Score': match["dire_score"] })
-kmeansClusteringAndNearestNeighbors(dfDireScoreRadiantScore, "Radiant Score", "Dire Score", 4, 3, 5, 40, 5, 40, 5)
+kmeansClusteringAndNearestNeighborsMethod2(dfDireScoreRadiantScore, "Radiant Score", "Dire Score", 1, 3, 5, 50, 30, 50, 30)
 
 
